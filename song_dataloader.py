@@ -65,7 +65,7 @@ class Song_Dataloader:
                     chord2in[chord] = len(chord2in)
                     in2chord[len(in2chord)] = chord
 
-        print("vocab size after wikifonia is: ", len(chord2in))
+        #print("vocab size after wikifonia is: ", len(chord2in))
 
         for input,output in combined_jazz_data:
             for chord in output:
@@ -73,7 +73,7 @@ class Song_Dataloader:
                     chord2in[chord] = len(chord2in)
                     in2chord[len(in2chord)] = chord
 
-        print("vocab size after wikifonia+jazz is: ", len(chord2in))
+        #print("vocab size after wikifonia+jazz is: ", len(chord2in))
 
         for input,output in combined_pdsa_data:
             for chord in output:
@@ -81,7 +81,7 @@ class Song_Dataloader:
                     chord2in[chord] = len(chord2in)
                     in2chord[len(in2chord)] = chord
 
-        print("vocab size after wikifonia+jazz+pdsa is: ", len(chord2in))
+        #print("vocab size after wikifonia+jazz+pdsa is: ", len(chord2in))
 
         for input,output in combined_chord_melody_data:
             for chord in output:
@@ -89,20 +89,23 @@ class Song_Dataloader:
                     chord2in[chord] = len(chord2in)
                     in2chord[len(in2chord)] = chord
 
-        print("vocab size after wikifonia+jazz+pdsa+chord_melody is: ", len(chord2in))
+        # print ouptut vocab size if uncommented: 
+        #print("vocab size after wikifonia+jazz+pdsa+chord_melody is: ", len(chord2in))
+        
+        # Checking vocab for debug purposes
+        # print(chord2in)
 
-        print(chord2in)
+        # print(len(chord2in))
 
-        print(len(chord2in))
-
-        print(note2in)
-        print(in2note)
+        # print(note2in)
+        # print(in2note)
 
         self.in2chord = in2chord
         self.chord2in = chord2in
         self.note2in = note2in
         self.in2note = in2note
 
+        # Checking length of datasets for debug purposes
         # print(combined_wikifonia_data[:3])
 
         # for i,o in combined_wikifonia_data[:3]:

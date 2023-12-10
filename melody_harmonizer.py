@@ -3,6 +3,7 @@ import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.optim.lr_scheduler import LambdaLR
 
 import pandas as pd
 import re
@@ -22,10 +23,23 @@ from Model.Transformer import Transformer
 from Trainer.trainer import Trainer
 from song_dataloader import Song_Dataloader
 
-        
-# torch.manual_seed(1)
+  
+    
+def eval(dataloader,model,loader,device, printText=True):
+    """
+    Tests model on random 8 bar phrase from validation set. Opens output in 
+    notation software for listening.
 
-def eval(dataloader,model,loader,device, printText=False):
+    Parameters:
+    - dataloader: contains full validation set for testing 
+    - model: trained harmony model
+    - loader: dataloader that prepares input melody for form model expects
+    - device: CPU/GPU, etc 
+    - printText: if True, model prints expected and actually predicted chords to terminal window 
+
+    Returns:
+    None
+    """
 
     in2chord, hord2in, note2in, in2note  = loader.get_vocab()
     
@@ -54,7 +68,6 @@ def eval(dataloader,model,loader,device, printText=False):
     output = output.permute(0,2,1)
 
 
-
     actual_chords = [in2chord[chord] for chord in rand_targets.squeeze().tolist()]
     predicted_chords =  [in2chord[chord] for chord in predicted_chords.squeeze().tolist()]
     if printText:
@@ -69,10 +82,28 @@ def eval(dataloader,model,loader,device, printText=False):
     songName = "Harmonized Excerpt"
     evaluation_helpers.viewPhrase(decoded_melody,decoded_predicted_chords,songName)
 
+    # Uncomment to view actual chords from excerpt 
     # evaluation_helpers.viewPhrase(decoded_melody,decoded_actual_chords,songName)
 
 
-def harmonize_melody(model,melody,device,loader,temp=1):
+def harmonize_melody(model,melody,device,loader,temp=1,k=20):
+  """
+    Runs input melody through model and outputs input melody with generated harmonies. Opens notation
+    software for viewing hearing output
+
+    Parameters:
+    - model: trained harmony model
+    - melody: input melody (in form of list of tuples)
+    - device: CPU/GPU, etc 
+    - loader: dataloader that prepares input melody for form model expects
+    - temp: (int) temperature value - lower = more conservtive,but more accurate, higher = more creative 
+        but more chaotic and dissonant
+    - k: (int) used in top k sampling to cut long tail of low probability chords
+
+    Returns:
+    list of output chords
+  """
+
   encoded = loader.encode_melody(melody)
   in2chord, chord2in, note2in, in2note = loader.get_vocab()
   SOS_TOKEN, EOS_TOKEN = loader.get_special_chars()
@@ -89,14 +120,19 @@ def harmonize_melody(model,melody,device,loader,temp=1):
     tgt_mask = model.get_tgt_mask(sequence.size(1)).to(device)
 
     output = model(inputs,sequence,tgt_mask)
+
+    # temperature scaling
     output = output/temp
 
-    probabilities = F.softmax(output[:,-1], dim=-1)
+    # top k sampling
+    probabilities = evaluation_helpers.top_k_sampling(output[:,-1],k,device)
+
+    probabilities = F.softmax(probabilities, dim=-1)
 
     sampled_chord = torch.multinomial(probabilities, 1)
 
     next_item = sampled_chord
-    # print(output,output.shape)
+
     next_item = torch.tensor([[next_item.item()]], device=device)
 
     # Concatenate previous input with next chord
@@ -108,12 +144,31 @@ def harmonize_melody(model,melody,device,loader,temp=1):
 
 def main():
 
+    """
+    Processes input. Command line arguments take following form:
+
+    --train: trains model from scratch using hyperparameters located in config.json and saves to   
+    trained_model.pth
+    --eval: runs model on random excerpt from validation set. If --train present, uses just trained model.
+    If not, loads pretrained model. 
+
+    if neither --train nor --eval is set, model expects command line argument of input melody in form of list
+    of tuples of form [midi note, duration in 16th notes]. If none is provided, model runs
+    inference on default twinkle, twinkle little star melody
+    
+    """
+
     script_name = sys.argv[0]
     train_flag = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] == '--train' else None  
     if train_flag:
         eval_flag = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] == '--eval' else None 
     else:
         eval_flag = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] == '--eval' else None 
+
+
+    if not eval_flag:
+        # input melody string for inference should be last iff eval flag isn't set
+        input_melody_string = sys.argv[-1]
 
     json_config_path = "config.json"
 
@@ -141,7 +196,9 @@ def main():
                          
         hidden_size = loaded_hyperparameters["hidden_size"]
         num_layers = loaded_hyperparameters["num_layers"]
-        lr = loaded_hyperparameters["lr"]
+        # Note: lr value interacts with LR warmup and Adam and so 
+        # will likely in practice be less than this value
+        lr = loaded_hyperparameters["lr"] 
         dim_feedforward = loaded_hyperparameters["dim_feedforward"]
         num_heads = loaded_hyperparameters["num_heads"]
         dropout_p = loaded_hyperparameters["dropout_p"]
@@ -157,11 +214,17 @@ def main():
 
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
 
+        # learning rate warmup epochs
+        warmup_epochs = 7
+    
         optimizer = torch.optim.Adam(model.parameters(),amsgrad=True,lr=lr)
+        # scheduler linearly increses LR for first warmup_epochs epochs
+        scheduler = LambdaLR(optimizer, lr_lambda=lambda epoch: (epoch + 1) / warmup_epochs if epoch < warmup_epochs else 1.0)
+
         loss_fn = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(),amsgrad=True,lr=lr)
 
-        trainer = Trainer(model,loss_fn=loss_fn,optimizer=optimizer,train_dataloader=train_dataloader,test_dataloader=test_dataloader,device=device)
+        trainer = Trainer(model,loss_fn=loss_fn,optimizer=optimizer,train_dataloader=train_dataloader,test_dataloader=test_dataloader,device=device,scheduler=scheduler)
         trainer.train(num_epochs)
 
         # save newly trained model
@@ -191,8 +254,8 @@ def main():
     # base mode is load pretrained model, conduct inference 
     if not eval_flag and not train_flag:
 
-        print("Running model on input melody...")
-
+        # Note: model will occasionally fail here rarely if it adds a superflous EOS token. 
+        # Simply re-running once or twice should fix.
 
         # harmonize melody in form of [midi note, duration in 16th notes]
         melody = [[60,4], [62,4],[64,4],[62,4],[64,4],[65,2],[67,2],[69,4],[67,4],[62,4],
@@ -201,9 +264,39 @@ def main():
 
         twinkle_melody =  [[60,4],[60,4], [67,4],[67,4],[69,4],[69,4], [67,8],[65,4],[65,4],[64,4],[64,4],[62,4],[62,4],[60,8]]
         moon_melody = [[67,16],[74,4],[72,12],[71,10],[69,2],[67,2],[65,2],[67,12],[60,4]]
-        sequence = harmonize_melody(model,moon_melody,device,loader,temp=1.2)
+        input_melody = None
+
+
+        print("Running model on input melody...")
+        try:
+            # input melody is passed as string for decoding
+            tuples_array = json.loads(input_melody_string)
+
+            if isinstance(tuples_array, list) and all(isinstance(t, list) and len(t) == 2 for t in tuples_array):
+                input_melody = tuples_array
+            else:
+                print("Error Invalid Format: enter input melody as list of tuples in form [midi note,duration]")
+        except json.JSONDecodeError:
+            print("Input melody invalid or not present. Using default melody.")
+
+        # if input melody is non-existant or invalid, default to twinkle twinkle little star
+        if input_melody == None:
+            input_melody = twinkle_melody
+        else:
+            melody_length = sum(t[1] for t in input_melody)
+            # input melody can't be longer than 8 bars
+            if melody_length > 8*16:
+                print("Error: Input Melody must be 8 bars or less. Using default melody instead")
+                input_melody = twinkle_melody
+
+        # change k and temp values for inference 
+        k = 5
+        temperature = 1.0
+
+        sequence = harmonize_melody(model,input_melody,device,loader,temp=temperature,k=k)
+        print("Output Chord Sequence: ")
         print(sequence)
-        evaluation_helpers.viewPhrase(moon_melody,evaluation_helpers.decode_stream(sequence[1:]),playScore=True)
+        evaluation_helpers.viewPhrase(input_melody,evaluation_helpers.decode_stream(sequence[1:]))
     
 
 main()

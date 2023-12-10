@@ -10,6 +10,7 @@ class Trainer:
                  train_dataloader,
                  test_dataloader,
                  device,
+                 scheduler,
                  train_losses=[],
                  test_losses=[]):
  
@@ -21,6 +22,7 @@ class Trainer:
         self.device = device
         self.train_losses = train_losses
         self.test_losses = test_losses
+        self.scheduler = scheduler
     
 
     def run_epoch(self):
@@ -47,7 +49,8 @@ class Trainer:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-            # lr_scheduler.step()
+            
+        self.scheduler.step()
 
         print("Loss:",loss.item())
         self.train_losses.append(loss.item())
