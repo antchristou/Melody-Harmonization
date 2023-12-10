@@ -113,3 +113,13 @@ def fixChordName(chord):
   return chord
 
 
+def fixFormatting(decoded_chords):
+    """
+    Due to limited data, model occasionally adds extra EOS token, which breaks model.
+    This function replaces those extra values with the tonic chord. 
+    Used when outputting exampels from eval set.
+    """
+    for chord in decoded_chords:
+      if chord[0] == "<EOS>":
+        chord[0] = "C"
+    return decoded_chords

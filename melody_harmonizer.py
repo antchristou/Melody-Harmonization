@@ -78,6 +78,9 @@ def eval(dataloader,model,loader,device, printText=True):
     decoded_melody = evaluation_helpers.decode_stream(decoded_melody[:-1])
     decoded_actual_chords = evaluation_helpers.decode_stream(actual_chords[1:-1])
     decoded_predicted_chords = evaluation_helpers.decode_stream(predicted_chords[1:-1])
+    
+    # remove any extra EOS tokens if any were generated
+    decoded_predicted_chords = evaluation_helpers.fixFormatting(decoded_predicted_chords)
 
     songName = "Harmonized Excerpt"
     evaluation_helpers.viewPhrase(decoded_melody,decoded_predicted_chords,songName)
@@ -226,7 +229,7 @@ def main():
         # scheduler linearly increses LR for first warmup_epochs epochs
         scheduler = LambdaLR(trainer.optimizer, lr_lambda=lambda epoch: (epoch + 1) / warmup_epochs if epoch < warmup_epochs else 1.0)
         trainer.scheduler = scheduler
-        
+
         trainer.train(num_epochs)
 
         # save newly trained model
