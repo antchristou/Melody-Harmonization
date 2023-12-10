@@ -218,13 +218,15 @@ def main():
         warmup_epochs = 7
     
         optimizer = torch.optim.Adam(model.parameters(),amsgrad=True,lr=lr)
-        # scheduler linearly increses LR for first warmup_epochs epochs
-        scheduler = LambdaLR(optimizer, lr_lambda=lambda epoch: (epoch + 1) / warmup_epochs if epoch < warmup_epochs else 1.0)
-
+  
         loss_fn = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(),amsgrad=True,lr=lr)
 
-        trainer = Trainer(model,loss_fn=loss_fn,optimizer=optimizer,train_dataloader=train_dataloader,test_dataloader=test_dataloader,device=device,scheduler=scheduler)
+        trainer = Trainer(model,loss_fn=loss_fn,optimizer=optimizer,train_dataloader=train_dataloader,test_dataloader=test_dataloader,device=device,scheduler=None)
+        # scheduler linearly increses LR for first warmup_epochs epochs
+        scheduler = LambdaLR(trainer.optimizer, lr_lambda=lambda epoch: (epoch + 1) / warmup_epochs if epoch < warmup_epochs else 1.0)
+        trainer.scheduler = scheduler
+        
         trainer.train(num_epochs)
 
         # save newly trained model

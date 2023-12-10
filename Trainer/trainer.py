@@ -49,7 +49,7 @@ class Trainer:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-            
+
         self.scheduler.step()
 
         print("Loss:",loss.item())
