@@ -25,7 +25,7 @@ from song_dataloader import Song_Dataloader
 
   
     
-def eval(dataloader,model,loader,device, printText=True):
+def eval(dataloader,model,loader,device, printText=False):
     """
     Tests model on random 8 bar phrase from validation set. Opens output in 
     notation software for listening.
@@ -253,7 +253,7 @@ def main():
 
     if eval_flag:
         print("Evaluating model..")
-        eval(train_dataloader,model,loader,device)
+        eval(train_dataloader,model,loader,device,printText=False)
         print("Successfully outputed example from test set")
     
     # base mode is load pretrained model, conduct inference 
@@ -295,8 +295,8 @@ def main():
                 input_melody = twinkle_melody
 
         # change k and temp values for inference 
-        k = 5
-        temperature = 1.0
+        k = 20
+        temperature = 2.0
 
         sequence = harmonize_melody(model,input_melody,device,loader,temp=temperature,k=k)
         print("Output Chord Sequence: ")
