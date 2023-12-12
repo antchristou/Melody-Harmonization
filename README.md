@@ -44,18 +44,18 @@ python3 ./melody_harmonizer.py '[[67,16],[74,4],[72,12],[71,10],[69,2],[67,2],[6
 
 ### 1. Datasets
 
-   Each dataset present is encoded in 16th notes frames of the form 
-   [melody,chords], as all the datasets are. The melody notes are encoded as integers representing 
+      Each dataset present is encoded in 16th notes frames of the form 
+      [melody,chords], as all the datasets are. The melody notes are encoded as integers representing 
    pitch classes C-B in integers, with rest, SOS, and EOS also being present.
 ### 3. Model
-   Transformer.py -- contains transformer architecture used 
+      Transformer.py -- contains transformer architecture used 
 ### 3. Saved_Models
-   pretrained_model.pth -- pretrained model that gets used when --train is not present
+      pretrained_model.pth -- pretrained model that gets used when --train is not present
    trained_model.pth -- where model trained with --train flag get stored
 ### 4. Trainer
-   trains model according to parameters in config.json if --train flag is set
+      trains model according to parameters in config.json if --train flag is set
 ### 5. Preprocessing scripts
-   contains the ipynb scripts used to clean and standardize the dataset. Can be used to add additional datasets in the future
+      contains the ipynb scripts used to clean and standardize the dataset. Can be used to add additional datasets in the future
 
 config.json -- where hyperparamters for training model when --train flag is set can be tweaked 
 
