@@ -56,6 +56,8 @@ python3 ./melody_harmonizer.py '[[67,16],[74,4],[72,12],[71,10],[69,2],[67,2],[6
       trains model according to parameters in config.json if --train flag is set
 ### 5. Preprocessing scripts
       contains the ipynb scripts used to clean and standardize the dataset. Can be used to add additional datasets in the future
+### 6. Misc
+      contains the original ipynb scripts used to train the model using Colab GPUs. Note: contains some paths from local machine and so may not run without changes. Included here for sake of full documentation of process.
 
 config.json -- where hyperparamters for training model when --train flag is set can be tweaked 
 

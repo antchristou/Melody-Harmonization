@@ -23,7 +23,8 @@ from Model.Transformer import Transformer
 from Trainer.trainer import Trainer
 from song_dataloader import Song_Dataloader
 
-  
+# Uncomment to ensure same results for reproducibility each time the program is run
+# torch.manual_seed(42)
     
 def eval(dataloader,model,loader,device, printText=False):
     """
@@ -185,11 +186,11 @@ def main():
     train_dataloader, test_dataloader,chord2in,in2chord,note2in, in2note = loader.load()
  
     # Using just CPU for current state of model:
-    # if torch.backends.mps.is_available():
-    #     device = torch.device("mps")
-    # else:
-    #     device = torch.device("cpu")
-    #     print ("GPU device not found, CPU used")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+        print ("GPU device not found, CPU used")
 
     device = torch.device("cpu")
 
