@@ -128,7 +128,7 @@ class Song_Dataloader:
         combined_data = combined_jazz_data+combined_wikifonia_data+combined_pdsa_data+combined_chord_melody_data
 
 
-        print("Total 8 measure chunks of data read:", len(combined_data))
+        # print("Total 8 measure chunks of data read:", len(combined_data))
        
         return combined_data, chord2in,in2chord,note2in, in2note
 

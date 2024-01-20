@@ -161,18 +161,29 @@ def main():
     inference on default twinkle, twinkle little star melody
     
     """
-
     script_name = sys.argv[0]
     train_flag = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] == '--train' else None  
+    # for deploying model in daw, run with --daw flag set and input melody provided
+    daw_flag = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] == '--daw' else None  
     if train_flag:
         eval_flag = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] == '--eval' else None 
     else:
         eval_flag = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] == '--eval' else None 
 
+    if not train_flag and not eval_flag:   
+        # expect temperature, then k value for top_k sampling 
+        temperature = sys.argv[-3] if len(sys.argv) > 2 else None 
+        top_k = sys.argv[-2] if len(sys.argv) > 3 else None 
 
     if not eval_flag:
         # input melody string for inference should be last iff eval flag isn't set
         input_melody_string = sys.argv[-1]
+    
+    # in daw mode supress all output except final harmony
+    if daw_flag:
+        print_text = False
+    else:
+        print_text = True
 
     json_config_path = "config.json"
 
@@ -190,7 +201,8 @@ def main():
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
-        print ("GPU device not found, CPU used")
+        if print_text:
+            print ("GPU device not found, CPU used")
 
     device = torch.device("cpu")
 
@@ -239,7 +251,8 @@ def main():
         torch.save(trained_model,'Saved_Models/trained_model.pth')
         print("Saved model")
     else:
-        print("Loading pretrained model...")
+        if print_text:
+            print("Loading pretrained model...")
 
         # change path to use different model (defaults to pretrained)
 
@@ -249,8 +262,8 @@ def main():
 
         model = Transformer(**model_kwargs)  
         model.load_state_dict(model_state)
-   
-        print("Model loaded")
+        if print_text:
+            print("Model loaded")
 
     if eval_flag:
         print("Evaluating model..")
@@ -272,8 +285,8 @@ def main():
         moon_melody = [[67,16],[74,4],[72,12],[71,10],[69,2],[67,2],[65,2],[67,12],[60,4]]
         input_melody = None
 
-
-        print("Running model on input melody...")
+        if print_text:
+            print("Running model on input melody...")
         try:
             # input melody is passed as string for decoding
             tuples_array = json.loads(input_melody_string)
@@ -296,14 +309,32 @@ def main():
                 input_melody = twinkle_melody
 
         # change k and temp values for inference 
-        k = 20
-        temperature = 2.0
+        if top_k:
+            k = int(top_k)
+        else:
+            k = 20
+        no_temp = True
+        if temperature:
+            try:
+                temperature = float(temperature)
+                no_temp = False
+            except ValueError:
+                no_temp = True
+        if no_temp:
+            # default value on error
+            temperature = 2.0
 
         sequence = harmonize_melody(model,input_melody,device,loader,temp=temperature,k=k)
-        print("Output Chord Sequence: ")
-        print(sequence)
-        evaluation_helpers.viewPhrase(input_melody,evaluation_helpers.decode_stream(sequence[1:]))
+        if print_text:
+            print("Output Chord Sequence: ")
+            print(sequence)
+
+        if not daw_flag:
+            evaluation_helpers.viewPhrase(input_melody,evaluation_helpers.decode_stream(sequence[1:]))
+        if daw_flag: 
+            evaluation_helpers.outputDAWPhrase(evaluation_helpers.decode_stream(sequence[1:]))
     
+        
 
 main()
 

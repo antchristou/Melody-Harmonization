@@ -8,6 +8,32 @@ import copy
 
 import re
 
+import json
+
+def outputDAWPhrase(output):
+  """
+  Formats phrase to be sent to DAW in form expected by API 
+  """
+  output = fixFormatting(output)
+
+  # transpose output up by following value
+  octaveDisplacement = 12
+
+  notesObj = {"notes":[]}
+  running_time = 0
+  for chord,duration in output:
+    chord = fixChordName(chord)
+    chordObj =  music21.harmony.ChordSymbol(chord)
+
+    notes = chordObj.notes
+
+    for note in notes: 
+      notesObj["notes"].append({"pitch":note.pitch.midi+octaveDisplacement,"start_time":running_time,"duration":duration*2,})
+    running_time += duration*2
+
+  notesObj = json.dumps(notesObj)
+  print(notesObj)
+
 
 def viewPhrase(input,output,songName="Harmonized Excerpt"):
   """
@@ -104,9 +130,13 @@ def fixChordName(chord):
    # filter out word alter to fit with music21 expected input format
   chord = re.sub(r'\balter\b', '', chord)
   chord = re.sub(r'\badd\s*b9', r'b9', chord)
+  chord = re.sub(r'\badd\s*b13', r'b13', chord)
+  chord = re.sub(r'\badd\s*#9', r'#9', chord)
+  chord = re.sub(r'\badd\s*#11', r'#11', chord)
 
   # fix sus chord spelling by replacing 'sus ' with 'sus4 '
   chord = re.sub(r'sus\s', r'sus4 ', chord)
+  chord = re.sub(r'sus47\s', r'sus4 ', chord)
   # Replace 'add 7 ' with '7 '
   chord = re.sub(r'add\s*7', r'7', chord)
 
