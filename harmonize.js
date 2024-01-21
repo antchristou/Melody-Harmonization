@@ -127,7 +127,6 @@ function create_clip(notes)
 	
 	for(i = 0; i < notes["notes"].length;i++)
 	{
-		post("\n Pre final transpose note value: ", notes["notes"][i]["pitch"]);
 		notes["notes"][i]["pitch"] = notes["notes"][i]["pitch"]+transposeDistance;
 	}
 	clip.call("add_new_notes", notes);

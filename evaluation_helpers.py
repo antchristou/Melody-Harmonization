@@ -23,8 +23,12 @@ def outputDAWPhrase(output):
   running_time = 0
   for chord,duration in output:
     chord = fixChordName(chord)
-    chordObj =  music21.harmony.ChordSymbol(chord)
-
+    try: 
+      chordObj =  music21.harmony.ChordSymbol(chord)
+    except Exception as e: 
+      # error on chord parse 
+      chordObj =  harmony.ChordSymbol('C')
+   
     notes = chordObj.notes
 
     for note in notes: 
@@ -60,7 +64,11 @@ def viewPhrase(input,output,songName="Harmonized Excerpt"):
     chordDur[0] = fixChordName(chordDur[0])
 
     # print(chordDur[0])
-    sym = harmony.ChordSymbol(chordDur[0])
+    try: 
+      sym = harmony.ChordSymbol(chordDur[0])
+    except Exception as e: 
+      # error on chord parse 
+      sym =  harmony.ChordSymbol('C')
     sym.quarterLength = chordDur[1]*2
     sym = sym.transpose('P8')
     sym.writeAsChord = True
@@ -126,8 +134,9 @@ def fixChordName(chord):
 
     This is all pretty unimportant music theory conventions/merely ensuring names match up. 
   """
-
    # filter out word alter to fit with music21 expected input format
+  chord = re.sub(r'sus add 7', r'7 sus4', chord)
+  chord = re.sub(r'add 4 subtract 3', r'sus4', chord)
   chord = re.sub(r'\balter\b', '', chord)
   chord = re.sub(r'\badd\s*b9', r'b9', chord)
   chord = re.sub(r'\badd\s*b13', r'b13', chord)
@@ -136,9 +145,14 @@ def fixChordName(chord):
 
   # fix sus chord spelling by replacing 'sus ' with 'sus4 '
   chord = re.sub(r'sus\s', r'sus4 ', chord)
+  chord = re.sub(r'sus/\s', r'sus4/', chord)
   chord = re.sub(r'sus47\s', r'sus4 ', chord)
   # Replace 'add 7 ' with '7 '
   chord = re.sub(r'add\s*7', r'7', chord)
+  # remove 'pedal' 
+  chord = re.sub(r'pedal', r' ', chord)
+  # replace word 'subtract' with 'omit' 
+  chord = re.sub(r'subtract', r'omit', chord)
 
   return chord
 
