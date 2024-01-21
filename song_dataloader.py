@@ -182,7 +182,10 @@ class Song_Dataloader:
         """
         encoded = []
         for noteDur in melody:
-            noteName = (noteDur[0]%12)
+            if noteDur[0] != "rest":
+                noteName = (noteDur[0]%12)
+            else:
+                noteName = "rest"
             encoded_note = self.note2in[noteName]
             encoded_note = [encoded_note]*noteDur[1] # repeat the note its duration number of times (in 16th notes)
             encoded += encoded_note

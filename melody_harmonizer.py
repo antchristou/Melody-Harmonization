@@ -287,10 +287,11 @@ def main():
 
         if print_text:
             print("Running model on input melody...")
+        
+        print(input_melody_string)
         try:
             # input melody is passed as string for decoding
             tuples_array = json.loads(input_melody_string)
-
             if isinstance(tuples_array, list) and all(isinstance(t, list) and len(t) == 2 for t in tuples_array):
                 input_melody = tuples_array
             else:
@@ -333,8 +334,7 @@ def main():
             evaluation_helpers.viewPhrase(input_melody,evaluation_helpers.decode_stream(sequence[1:]))
         if daw_flag: 
             evaluation_helpers.outputDAWPhrase(evaluation_helpers.decode_stream(sequence[1:]))
-    
-        
+       
 
 main()
 
