@@ -20,6 +20,7 @@ maxApi.addHandler('run_model', (...input) => {
 	maxApi.post(modelIn);
 	const pyProg = spawn(pythonExec, [scriptPath,"--daw",temperature, k_value, modelIn]);
 //	const pyProg = spawn(pythonExec, ['--version']);
+//	maxApi.post("val for slider ", tempSlider.getvalueof());
 
 	pyProg.stdout.on('data', function(data) {
 	
@@ -36,7 +37,8 @@ maxApi.addHandler('run_model', (...input) => {
 	
 
 //	maxApi.post("done "+data);
-
+	// from here: get output chords in form useful for creating new clips
+	// create new clips 
 	
 	pyProg.stderr.on('data', (data) => {
 		maxApi.post("error on script call "+data);

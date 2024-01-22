@@ -81,7 +81,7 @@ function Harmonize()
 	// get key signature to transpose to C
 	var keyValue = keySig.getvalueof();
 	// format notes into form clips expect 
-	model_input_notes = process_input(notes.notes,keyValue);
+	model_input_notes = process_input(notes.notes,keyValue,notes.duration);
 	post("\nPOSTING "+model_input_notes);
 	
 	// pass into python machine learning model 
@@ -148,12 +148,19 @@ function run_model(model_input_notes)
 }
 // prepare raw API call for input to model
 // model expects form of tuples [note,duration in 16ths]
-function process_input(notes,key_sig)
+function process_input(notes,key_sig,clip_dur)
 {
 	
 	post("Key sig: ", key_sig);
 	var transposeDistance = distanceToC(parseInt(key_sig));
 	post("\n Transpose value: ", transposeDistance);
+	// edge case: if clip is totally empty, make rest for duration of clip
+	post("\nWHAT WE GOT", notes,clip_dur)
+	if (notes[1] == 0)
+	{
+		post("\n CLIP WITH NO NOTES DETECTED");
+		return [["rest",clip_dur*4]];
+	}
 	
 	// need to sort based on start time as api call isn't sorted 
 	sorted_notes = []
@@ -177,7 +184,14 @@ function process_input(notes,key_sig)
 	for(var i =0; i < sorted_notes.length; i = i+1)
 	{
 		// multiply by 4 to get duration in 16ths 
+		if(sorted_notes[i][1] != "rest")
+		{
 		var noteDur = [sorted_notes[i][1]+transposeDistance,sorted_notes[i][3]*4];
+		}
+		else 
+		{
+		var noteDur = [sorted_notes[i][1],sorted_notes[i][3]*4];
+		}
 		input_notes.push(noteDur);
 		
 	}
@@ -208,6 +222,21 @@ function correct_input(sorted_notes)
 		}
 	}
 	
+	var noSmallNotes = [];
+	for (var i = 0; i < formattedNotes.length; i++)
+	{
+		// remove notes that are non divisible by 16ths
+		if(sorted_notes[i][3] % 0.25 == 0)
+		{
+			noSmallNotes.push(formattedNotes[i]);
+		}
+		else
+		{
+			post("SMALL NOTE DETECTED: ", sorted_notes[i][3]);
+		}
+	}
+	formattedNotes = noSmallNotes;
+	
 	// cut off notes past 8 bars
 	var totalLength = 0;
 	for (var i = 0; i < formattedNotes.length; i++)
@@ -221,6 +250,31 @@ function correct_input(sorted_notes)
 		}
 			
 	}
+	
+	withRests = []
+	// extrapolate rests in missing points
+	for (var i = 0; i < formattedNotes.length-1; i++)
+	{
+		withRests.push(formattedNotes[i]);
+		var previousEnd = formattedNotes[i][2]+formattedNotes[i][3];
+		// if end time of previous note does not equal start time of previous, must add rest
+		if(previousEnd != formattedNotes[i+1][2])
+		{
+			var addedRest = ['note', 'rest',previousEnd, formattedNotes[i+1][2]-previousEnd];
+			withRests.push(addedRest);
+			post("\nADDING REST", addedRest);
+		}
+	}
+	
+	// edge case if beginning would be a rest
+	if(withRests[0][2] != 0)
+	{
+		var addedRest = ['note', 'rest',0, withRests[0][2]];
+		withRests.splice(0,0,addedRest);
+		post("\nADDING START REST", addedRest);
+	}
+	
+	formattedNotes = withRests;
 		
 	return formattedNotes;
 }
