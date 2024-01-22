@@ -288,16 +288,17 @@ def main():
         if print_text:
             print("Running model on input melody...")
         
-        print(input_melody_string)
         try:
             # input melody is passed as string for decoding
             tuples_array = json.loads(input_melody_string)
             if isinstance(tuples_array, list) and all(isinstance(t, list) and len(t) == 2 for t in tuples_array):
                 input_melody = tuples_array
             else:
-                print("Error Invalid Format: enter input melody as list of tuples in form [midi note,duration]")
+                if print_text:
+                    print("Error Invalid Format: enter input melody as list of tuples in form [midi note,duration]")
         except json.JSONDecodeError:
-            print("Input melody invalid or not present. Using default melody.")
+            if print_text:
+                print("Input melody invalid or not present. Using default melody.")
 
         # if input melody is non-existant or invalid, default to twinkle twinkle little star
         if input_melody == None:

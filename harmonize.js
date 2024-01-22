@@ -49,7 +49,6 @@ function getSelectedClip()
 	//if(typeof(selectedTrack) == null)
 }
 
-
 // using notes from selected input clip, output harmony to selected output destination
 function Harmonize()
 {
@@ -89,8 +88,7 @@ function Harmonize()
 	var output = run_model(model_input_notes);
 	
 	// turn back into ableton notes format, output to clip
-	
-	
+		
 }
 
 
@@ -130,6 +128,8 @@ function create_clip(notes)
 		notes["notes"][i]["pitch"] = notes["notes"][i]["pitch"]+transposeDistance;
 	}
 	clip.call("add_new_notes", notes);
+	
+	post("\n CREATED CLIP");
 }
 
 // executes python script
@@ -168,6 +168,10 @@ function process_input(notes,key_sig)
 	
 	post(sorted_notes[0]+" THEN!! " +sorted_notes[1]);
 	
+	// correct input that is polyphonic, or contains too long/short note values 
+	// or contains rests 
+	sorted_notes = correct_input(sorted_notes);
+	
 	input_notes = [];
 	// start i at two to get past first two tokens which are word 'notes' and number of notes
 	for(var i =0; i < sorted_notes.length; i = i+1)
@@ -179,6 +183,60 @@ function process_input(notes,key_sig)
 	}
 	return input_notes;
 	
+}
+function correct_input(sorted_notes)
+{
+	post("\n pre corrected notes " + sorted_notes);
+	// notes array at this point is sorted and takes form of 
+	// 'note', midi_pitch, start_time,
+    // duration, velocity, mute status
+
+	timesFilled = [];
+		
+	formattedNotes = [];
+
+	// handle overlapping notes
+	for (var i = 0; i < sorted_notes.length; i++)
+	{
+		post("\nNEW",i, sorted_notes[i]);
+		var overlap = has_overlap(timesFilled,sorted_notes[i])
+		if(overlap == false)
+		{
+			formattedNotes.push(sorted_notes[i]);
+			timesFilled.push(sorted_notes[i]);
+		}
+	}
+		
+	return formattedNotes;
+}
+
+function has_overlap(existing_notes, new_note)
+{
+	var does_overlap = false;
+
+    for (var j = 0; j < existing_notes.length; j++){
+		
+	
+		var new_start = new_note[2];
+		var new_end = new_note[2]+new_note[3];
+		
+		var existing_start = existing_notes[j][2];
+		var existing_end = existing_notes[j][2] + existing_notes[j][3];
+		
+	//	post("\nEXISTING",existing_notes[i]);
+		
+	//	post("\nEXISTING end",existing_start, existing_end);
+	//	post("\n NEW end",new_start, new_end);
+		
+		// check note start vs note end (note start+note duration)
+		if((new_start >= existing_start) && (new_end <= existing_end))
+		{does_overlap = true}
+		else if(new_start < existing_end && new_end > existing_end)
+		{does_overlap = true}
+
+	}
+	post("\nIS THERE A OVERLAP WE ASK?",does_overlap);
+    return does_overlap;
 }
 
 function distanceToC(number)
