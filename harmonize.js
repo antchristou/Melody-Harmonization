@@ -187,6 +187,7 @@ function process_input(notes,key_sig)
 function correct_input(sorted_notes)
 {
 	post("\n pre corrected notes " + sorted_notes);
+	
 	// notes array at this point is sorted and takes form of 
 	// 'note', midi_pitch, start_time,
     // duration, velocity, mute status
@@ -205,6 +206,20 @@ function correct_input(sorted_notes)
 			formattedNotes.push(sorted_notes[i]);
 			timesFilled.push(sorted_notes[i]);
 		}
+	}
+	
+	// cut off notes past 8 bars
+	var totalLength = 0;
+	for (var i = 0; i < formattedNotes.length; i++)
+	{
+		totalLength = totalLength + formattedNotes[i][3];
+		if (totalLength > 32)
+		{
+			post("\nREACHED MAX MELODY LENGTH");
+			formattedNotes.splice(i);
+			break;
+		}
+			
 	}
 		
 	return formattedNotes;

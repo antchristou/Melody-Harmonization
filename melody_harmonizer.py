@@ -307,7 +307,8 @@ def main():
             melody_length = sum(t[1] for t in input_melody)
             # input melody can't be longer than 8 bars
             if melody_length > 8*16:
-                print("Error: Input Melody must be 8 bars or less. Using default melody instead")
+                if print_text:
+                    print("Error: Input Melody must be 8 bars or less. Using default melody instead")
                 input_melody = twinkle_melody
 
         # change k and temp values for inference 
