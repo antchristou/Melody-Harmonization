@@ -1,15 +1,5 @@
 
-var trackMenu = this.patcher.getnamed("trackMenu");
-var outputTrackMenu =  this.patcher.getnamed("outputTrackMenu");
-
-var clipMenu =  this.patcher.getnamed("clipMenu");
-var outputClipMenu =  this.patcher.getnamed("outputClipMenu");
-
-var tempSlider = this.patcher.getnamed("tempSlider");
-
-var kSlider = this.patcher.getnamed("kSlider");
-
-var keySig = this.patcher.getnamed("keySig");
+init();
 
 function getSelectedTrack(){
     var allTracks = trackMenu.getattr('items');
@@ -563,4 +553,20 @@ function postAllOutputIDs()
 		post("\nID:",clips[i].id);
 	}
 	
+	
 }
+
+function init(){
+	
+trackMenu = this.patcher.getnamed("trackMenu");
+outputTrackMenu =  this.patcher.getnamed("outputTrackMenu");
+
+clipMenu =  this.patcher.getnamed("clipMenu");
+ outputClipMenu =  this.patcher.getnamed("outputClipMenu");
+
+tempSlider = this.patcher.getnamed("tempSlider");
+
+kSlider = this.patcher.getnamed("kSlider");
+
+keySig = this.patcher.getnamed("keySig");
+	}
