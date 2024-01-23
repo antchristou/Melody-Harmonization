@@ -13,6 +13,10 @@ var keySig = this.patcher.getnamed("keySig");
 
 function getSelectedTrack(){
     var allTracks = trackMenu.getattr('items');
+	if(typeof allTracks === 'string')
+	{
+		allTracks = [allTracks];
+	}
     var b = trackMenu.getvalueof();
 
 	// todo: investigate why x2 works heh..
@@ -25,7 +29,12 @@ function getSelectedTrack(){
 
 function getSelectedOutputTrack()
 { 
+	post("\nOUTPUT TRACK ITSELF",outputTrackMenu);
 	var allTracks = outputTrackMenu.getattr('items');
+	if(typeof allTracks === 'string')
+	{
+		allTracks = [allTracks];
+	}
     var b = outputTrackMenu.getvalueof();
 
 	// todo: investigate why x2 works heh..
@@ -39,6 +48,10 @@ function getSelectedOutputTrack()
 function getSelectedClip()
 { 
 	var allClips = clipMenu.getattr('items');
+	if(typeof allClips === 'string')
+	{
+		allClips = [allClips];
+	}
     var b = clipMenu.getvalueof();
 
 	// todo: investigate why x2 works heh..
@@ -71,7 +84,6 @@ function Harmonize()
 	}
 	// get notes from selected clip 
 	// clip has following attributes: id of clip, notes (0-127 in midi), and duration of clip
-	// TODO: make sure clip is less than max 8 bars 
 
 	var notes = get_notes(selectedClipID);
 	
@@ -103,6 +115,7 @@ function create_clip(notes)
 	var clip = new LiveAPI()
 	// get currently selected output clip 
 	clip_id = getOutputClipID();
+	post("AT TIME OF CLIP CREATION OUTPUT CLIP ID:",clip_id);
 	clip.id = clip_id
 	if (clip.type === 'ClipSlot'){
 		clip.id = clip.get('clip')[1]
@@ -323,21 +336,21 @@ function distanceToC(number)
 function getAllClipsFromSelectedOutputTrack()
 {
 	var selectedTrack = getSelectedOutputTrack();
+	post("\nGetting ALL CLIPS FROM SELECTED OUT", selectedTrack);
 	var selectedTrackID = null;
 	var tracks = getTracks();
 	
 	// get selected track ID from list of tracks 
 	for (var i = 0; i < tracks.length; i++) 
 	{ 
-		post("output track: "+selectedTrack + "\n");
+		post("output track NAME: "+selectedTrack + "\n");
 		post(tracks[i].name+ "\n");
 		if(tracks[i].name == selectedTrack){
 			selectedTrackID = tracks[i].id;
 			} 
 	}
 	
-	post(selectedTrackID);
-	post(typeof(selectedTrackID));
+	post("\nOUTPUT Selected TRACK ID", selectedTrackID);
 	var allClips = clips(selectedTrackID);
 	return allClips
 }
@@ -356,6 +369,7 @@ function populateOutputClipMenu()
 		}
 			
 	}
+	post("\nYEEE");
 	outlet(0,clipNames);
 	
 }
@@ -365,21 +379,29 @@ function getOutputClipID()
 	//var allClips = getAllClipsFromSelectedOutputTrack();
 	
 	var allClips = outputClipMenu.getattr('items');
-	
+	// if only one clip cast as a list
+	if(typeof allClips === 'string')
+	{
+		allClips = [allClips];
+	}
     var b = outputClipMenu.getvalueof();
 
-
+	post("\nWTF IS A B ",b);
+	
+	
     var selectedClip = allClips[b*2];
 	
 	// contains array of all clips and IDs for given output track
 	var clipsArray  = getAllClipsFromSelectedOutputTrack()
 	
 	var selectedClipID;
+	post("\n ALL CLIPS",allClips+"\n");
+	post("\n TYPEOF ALL",typeof(allClips));
 
 	// search to get id of selected clip 
 	for (var i = 0; i < clipsArray.length; i++) 
 	{ 
-		
+		post("\nsearching output...",clipsArray[i].name,selectedClip);
 		if(clipsArray[i].name == selectedClip && !clipsArray[i].empty){
 			selectedClipID = clipsArray[i].id;
 			} 
@@ -400,7 +422,7 @@ function getAllClips()
 	// get selected track ID from list of tracks 
 	for (var i = 0; i < tracks.length; i++) 
 	{ 
-		post(selectedTrack + "\n");
+		post("\nThe selected track is: ",selectedTrack + "\n");
 		post(tracks[i].name+ "\n");
 		if(tracks[i].name == selectedTrack){
 			selectedTrackID = tracks[i].id;
@@ -465,6 +487,7 @@ function getTracks()
 			}
 		}
 	}
+	post("\nHMMM");
 //	outlet(0,retTracks);
 	//outlet(0,"hi");
 	//post(retTracks.length)
@@ -520,4 +543,24 @@ function get_notes(clip_id){
 		duration : clip.get('end_time')[0]
 	}
 	return notes;
+}
+
+function postAllIDs()
+{
+	var clips = getAllClips();
+	for (i =0;i < clips.length;i++)
+	{
+		post("\nID:",clips[i].id);
+	}
+	
+}
+
+function postAllOutputIDs()
+{
+	var clips = getAllClipsFromSelectedOutputTrack();
+	for (i =0;i < clips.length;i++)
+	{
+		post("\nID:",clips[i].id);
+	}
+	
 }
