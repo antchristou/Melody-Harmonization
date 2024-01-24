@@ -36,7 +36,7 @@ to attempt to harmonize. This melody must be less than 8 bars long and in the fo
 [[midi note 1, duration in 16th notes 1], [midi note 2, duration in 16th notes 2]...]'
 
 The --daw flag should only be set when the program is deployed from within the matching 
-Max for Live plugin. It communicates to the model that the outputs need to comform to what the Live API expects. 
+Max for Live plugin. It communicates to the model that the outputs need to comform to what the Live API expects. When the --daw flag is set, the model can also accept two integers corresponding to the sampling temperature and k value for top-k sampling. 
 
 If the provided melody is invalid or not present, a default melody is loaded and used.
 An example of a valid input is: 
