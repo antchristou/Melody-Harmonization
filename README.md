@@ -35,6 +35,9 @@ If neither the eval nor train flag are set,the model expects a command line argu
 to attempt to harmonize. This melody must be less than 8 bars long and in the form of 
 [[midi note 1, duration in 16th notes 1], [midi note 2, duration in 16th notes 2]...]'
 
+The --daw flag should only be set when the program is deployed from within the matching 
+Max for Live plugin. It communicates to the model that the outputs need to comform to what the Live API expects. 
+
 If the provided melody is invalid or not present, a default melody is loaded and used.
 An example of a valid input is: 
 python3 ./melody_harmonizer.py '[[67,16],[74,4],[72,12],[71,10],[69,2],[67,2],[65,2],[67,12],[60,4]]'
