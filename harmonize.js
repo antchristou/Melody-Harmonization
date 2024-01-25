@@ -214,6 +214,7 @@ function correct_input(sorted_notes)
 	formattedNotes = [];
 
 	// handle overlapping notes
+	post("\nTHERE ARE THIS MANY NOTES", sorted_notes.length);
 	for (var i = 0; i < sorted_notes.length; i++)
 	{
 		post("\nNEW",i, sorted_notes[i]);
@@ -229,30 +230,27 @@ function correct_input(sorted_notes)
 	for (var i = 0; i < formattedNotes.length; i++)
 	{
 		// remove notes that are non divisible by 16ths
-		if(sorted_notes[i][3] % 0.25 == 0)
+		if(formattedNotes[i][3] % 0.25 == 0)
 		{
 			noSmallNotes.push(formattedNotes[i]);
 		}
+		else if(formattedNotes[i][3] > 0.25)
+		{
+			// round to the nearest multiple of 0.25
+			post("\nROUNDING NOTE DOWN", formattedNotes[i][3]);
+			var newDuration = Math.floor(formattedNotes[i][3] / 0.25) * 0.25;
+			var newNote = [formattedNotes[i][0],formattedNotes[i][1],formattedNotes[i][2], newDuration, 
+			formattedNotes[i][4],formattedNotes[i][5]];
+			noSmallNotes.push(newNote);
+		}
 		else
 		{
-			post("SMALL NOTE DETECTED: ", sorted_notes[i][3]);
+			post("\nSMALL NOTE DETECTED: ", formattedNotes[i][3]);
 		}
 	}
 	formattedNotes = noSmallNotes;
 	
-	// cut off notes past 8 bars
-	var totalLength = 0;
-	for (var i = 0; i < formattedNotes.length; i++)
-	{
-		totalLength = totalLength + formattedNotes[i][3];
-		if (totalLength > 32)
-		{
-			post("\nREACHED MAX MELODY LENGTH");
-			formattedNotes.splice(i);
-			break;
-		}
-			
-	}
+
 	
 	withRests = []
 	// extrapolate rests in missing points
@@ -263,21 +261,42 @@ function correct_input(sorted_notes)
 		// if end time of previous note does not equal start time of previous, must add rest
 		if(previousEnd != formattedNotes[i+1][2])
 		{
-			var addedRest = ['note', 'rest',previousEnd, formattedNotes[i+1][2]-previousEnd];
+			// round spaces in melody to nearest 16th note 
+			// NOTE: this introduces some potential distorion of the length of the melody if this happens enough
+			var restDur = Math.floor((formattedNotes[i+1][2]-previousEnd)/0.25)*0.25;
+			var addedRest = ['note', 'rest',previousEnd, restDur];
 			withRests.push(addedRest);
 			post("\nADDING REST", addedRest);
 		}
 	}
-	
+	withRests.push(formattedNotes[formattedNotes.length-1]);
 	// edge case if beginning would be a rest
 	if(withRests[0][2] != 0)
 	{
-		var addedRest = ['note', 'rest',0, withRests[0][2]];
+		var restDur = Math.floor(withRests[0][2]/0.25)*0.25;
+		var addedRest = ['note', 'rest',0, restDur];
 		withRests.splice(0,0,addedRest);
 		post("\nADDING START REST", addedRest);
-	}
+	}	
+	
+
 	
 	formattedNotes = withRests;
+	
+	// cut off notes past 8 bars
+	var totalLength = 0;
+	for (var i = 0; i < formattedNotes.length; i++)
+	{
+		totalLength = totalLength + formattedNotes[i][3];
+		post("\nTHE TOTAL LENGTH IS",totalLength);
+		if (totalLength > 32)
+		{
+			post("\nREACHED MAX MELODY LENGTH");
+			formattedNotes.splice(i);
+			break;
+		}
+			
+	}
 		
 	return formattedNotes;
 }
